@@ -1,0 +1,60 @@
+#-------------------------------
+# General Site Settings
+baseurl: "/dl4water" # the subpath of your site, e.g. /blog
+url: "https://rainflowai.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+
+
+#-------------------------------
+# Build Settings
+markdown: kramdown
+permalink: /:title
+plugins:
+  - jekyll-paginate
+  - jekyll-sitemap
+
+future: true
+
+paginate: 6
+paginate_path: "/page/:num"
+
+
+#-------------------------------
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name
+  posts:
+    output: true
+    permalink: /:slug
+  authors:
+    output: true
+    permalink: /:name
+
+# Pages Path
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+  - scope:
+      path: ""
+      type: "authors"
+    values:
+      layout: "author"
+
+
+sass:
+  style: compressed
+
+# timezone: America/New_York

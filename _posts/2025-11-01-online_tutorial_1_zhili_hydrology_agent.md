@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Large Language Model (LLM) Agent in Hydrology
-description: This tutorial introduces AQUAH, the first language-based agent that automates hydrologic modeling—from data retrieval to simulation—using simple natural-language prompts.
+description: This tutorial introduces AQUAH, the first language-based agent specifically designed for hydrologic modeling. With simple natural-language prompts (e.g., 'simulate floods for a specific basin'), AQUAH autonomously retrieves data, configures hydrologic models, executes simulations, and produces analyst-ready reports, simplifying complex environmental modeling tasks.
 date: 2025-11-01
 event_time: "10:00 - 11：00 AM"        
 event_date: "Nov 01, 2025"

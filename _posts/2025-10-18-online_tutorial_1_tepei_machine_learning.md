@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Classic Machine Learning for Earth and Environmental Sciences
+title: Machine Learning for Natural Hazard Prediction
 description: This tutorial provides a ...
 date: 2025-10-18
 event_time: "11:00 - 12：00 AM"        

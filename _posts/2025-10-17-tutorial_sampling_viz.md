@@ -7,7 +7,7 @@ event_time:
 event_date: 
 category: tutorial
 author: jiangtao
-image:
+image: '/images/posts/basin_sampling.jpg'
 video_embed:
 tags: [Tutorial]
 featured: false

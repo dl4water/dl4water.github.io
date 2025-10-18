@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RNN vs LSTM: Long-Term Memory Comparison</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const SimpleLineChart = ({ data, lines, xKey, yLabel, height = 300 }) => {
+            const svgRef = useRef();
+            
+            useEffect(() => {
+                if (!data || data.length === 0) return;
+                
+                const svg = d3.select(svgRef.current);
+                svg.selectAll("*").remove();
+                
+                const margin = { top: 20, right: 30, bottom: 50, left: 60 };
+                const width = svgRef.current.clientWidth - margin.left - margin.right;
+                const chartHeight = height - margin.top - margin.bottom;
+                
+                const g = svg.append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                const x = d3.scaleLinear()
+                    .domain([d3.min(data, d => d[xKey]), d3.max(data, d => d[xKey])])
+                    .range([0, width]);
+                
+                const allValues = lines.flatMap(line => data.map(d => d[line.key]));
+                const y = d3.scaleLinear()
+                    .domain([d3.min(allValues), d3.max(allValues)])
+                    .range([chartHeight, 0]);
+                
+                // X axis
+                g.append("g")
+                    .attr("transform", `translate(0,${chartHeight})`)
+                    .call(d3.axisBottom(x))
+                    .append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 35)
+                    .attr("fill", "black")
+                    .style("font-size", "12px")
+                    .text("Time Step (days)");
+                
+                // Y axis
+                g.append("g")
+                    .call(d3.axisLeft(y))
+                    .append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("x", -chartHeight / 2)
+                    .attr("y", -45)
+                    .attr("fill", "black")
+                    .style("font-size", "12px")
+                    .text(yLabel);
+                
+                // Grid
+                g.append("g")
+                    .attr("class", "grid")
+                    .attr("opacity", 0.1)
+                    .call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
+                
+                // Draw lines
+                lines.forEach(line => {
+                    const linePath = d3.line()
+                        .x(d => x(d[xKey]))
+                        .y(d => y(d[line.key]));
+                    
+                    g.append("path")
+                        .datum(data)
+                        .attr("fill", "none")
+                        .attr("stroke", line.color)
+                        .attr("stroke-width", line.width || 2)
+                        .attr("d", linePath);
+                });
+                
+                // Legend
+                const legend = svg.append("g")
+                    .attr("transform", `translate(${margin.left + 10}, ${margin.top})`);
+                
+                lines.forEach((line, i) => {
+                    const legendRow = legend.append("g")
+                        .attr("transform", `translate(0, ${i * 20})`);
+                    
+                    legendRow.append("line")
+                        .attr("x1", 0)
+                        .attr("x2", 20)
+                        .attr("y1", 0)
+                        .attr("y2", 0)
+                        .attr("stroke", line.color)
+                        .attr("stroke-width", 2);
+                    
+                    legendRow.append("text")
+                        .attr("x", 25)
+                        .attr("y", 4)
+                        .style("font-size", "12px")
+                        .text(line.name);
+                });
+                
+            }, [data, lines, xKey, yLabel, height]);
+            
+            return <svg ref={svgRef} style={{ width: '100%', height: `${height}px` }}></svg>;
+        };
+
+        const RNNvsLSTMDemo = () => {
+          const [sequenceLength, setSequenceLength] = useState(30);
+          const [gradientData, setGradientData] = useState([]);
+          const [memoryData, setMemoryData] = useState([]);
+          const [isAnimating, setIsAnimating] = useState(false);
+          const [currentStep, setCurrentStep] = useState(0);
+
+          const calculateVanishingGradient = (length, rnnRate = 0.85, lstmRate = 0.98) => {
+            const data = [];
+            let rnnGradient = 1.0;
+            let lstmGradient = 1.0;
+            
+            for (let i = length - 1; i >= 0; i--) {
+              data.unshift({
+                timestep: i + 1,
+                rnnGradient: rnnGradient,
+                lstmGradient: lstmGradient,
+                rnnLogGradient: Math.log10(Math.max(rnnGradient, 1e-10)),
+                lstmLogGradient: Math.log10(Math.max(lstmGradient, 1e-10))
+              });
+              rnnGradient *= rnnRate;
+              lstmGradient *= lstmRate;
+            }
+            return data;
+          };
+
+          const simulateMemoryDecay = (length) => {
+            const data = [];
+            const importantEventStep = 1;
+            
+            for (let t = 1; t <= length; t++) {
+              const distanceFromEvent = t - importantEventStep;
+              const rnnMemory = distanceFromEvent === 0 ? 1.0 : 
+                Math.exp(-distanceFromEvent * 0.15);
+              
+              const lstmMemory = distanceFromEvent === 0 ? 1.0 : 
+                Math.exp(-distanceFromEvent * 0.02);
+              
+              data.push({
+                timestep: t,
+                rnnMemory: rnnMemory,
+                lstmMemory: lstmMemory,
+                rainfall: t === importantEventStep ? 1 : 0
+              });
+            }
+            return data;
+          };
+
+          useEffect(() => {
+            setGradientData(calculateVanishingGradient(sequenceLength));
+            setMemoryData(simulateMemoryDecay(sequenceLength));
+          }, [sequenceLength]);
+
+          useEffect(() => {
+            if (isAnimating && currentStep < sequenceLength) {
+              const timer = setTimeout(() => {
+                setCurrentStep(prev => prev + 1);
+              }, 100);
+              return () => clearTimeout(timer);
+            } else if (currentStep >= sequenceLength) {
+              setIsAnimating(false);
+            }
+          }, [isAnimating, currentStep, sequenceLength]);
+
+          const startAnimation = () => {
+            setCurrentStep(0);
+            setIsAnimating(true);
+          };
+
+          const resetAnimation = () => {
+            setCurrentStep(0);
+            setIsAnimating(false);
+          };
+
+          const finalRNNMemory = memoryData[memoryData.length - 1]?.rnnMemory || 0;
+          const finalLSTMMemory = memoryData[memoryData.length - 1]?.lstmMemory || 0;
+          const finalRNNGradient = gradientData[0]?.rnnGradient || 0;
+          const finalLSTMGradient = gradientData[0]?.lstmGradient || 0;
+
+          const displayMemoryData = memoryData.slice(0, currentStep || sequenceLength);
+
+          return (
+            <div className="w-full max-w-6xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-lg">
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  RNN vs LSTM: Long-Term Memory Comparison
+                </h1>
+                <p className="text-gray-600">
+                  Visualizing why RNNs forget while LSTMs remember long sequences
+                </p>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow mb-6">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex-1 min-w-64">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sequence Length: {sequenceLength} days
+                    </label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="100"
+                      value={sequenceLength}
+                      onChange={(e) => setSequenceLength(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={startAnimation}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    >
+                      Start Animation
+                    </button>
+                    <button
+                      onClick={resetAnimation}
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border-l-4 border-blue-600 p-5 mb-6 rounded-lg shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">🌧️ The Story: Can AI Remember Yesterday's Rain?</h3>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <p>
+                    <strong>Day 1:</strong> A big rainstorm happens. Water soaks into the ground.
+                  </p>
+                  <p>
+                    <strong>Day {sequenceLength}:</strong> We want to predict how much water flows in the river today.
+                  </p>
+                  <p className="pt-2 border-t border-blue-300">
+                    <strong>The Challenge:</strong> The AI needs to "remember" that it rained {sequenceLength} days ago, 
+                    because that rain is <em>still affecting</em> today's river flow (water moves slowly through soil).
+                  </p>
+                  <p className="font-semibold text-blue-800">
+                    💭 Think of it like human memory: Can you remember what you had for lunch 30 days ago? 
+                    That's what we're asking the AI to do!
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow mb-6">
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">
+                  📊 How Well Does Each AI Remember the Rain?
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  <strong>Memory Strength</strong> = How much the AI still "remembers" about Day 1's rainfall
+                </p>
+                <SimpleLineChart 
+                    data={displayMemoryData}
+                    xKey="timestep"
+                    yLabel="Memory Strength"
+                    lines={[
+                        { key: 'rnnMemory', color: '#3b82f6', name: 'RNN Memory', width: 2 },
+                        { key: 'lstmMemory', color: '#10b981', name: 'LSTM Memory', width: 2 }
+                    ]}
+                />
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                    <p className="text-sm text-gray-700">
+                      <strong className="text-blue-700">🧠 Simple RNN:</strong><br/>
+                      Memory remaining: <span className="font-bold text-red-600">
+                        {(finalRNNMemory * 100).toFixed(1)}%
+                      </span><br/>
+                      <span className="text-xs italic">Almost completely forgot! 😔</span>
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded border border-green-200">
+                    <p className="text-sm text-gray-700">
+                      <strong className="text-green-700">🎯 Smart LSTM:</strong><br/>
+                      Memory remaining: <span className="font-bold text-green-600">
+                        {(finalLSTMMemory * 100).toFixed(1)}%
+                      </span><br/>
+                      <span className="text-xs italic">Still remembers well! 🎉</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow mb-6">
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">
+                  🔧 Can the AI Learn From Its Mistakes?
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  <strong>Gradient</strong> = The AI's ability to learn and improve. Higher = better learning!
+                </p>
+                <SimpleLineChart 
+                    data={gradientData}
+                    xKey="timestep"
+                    yLabel="Gradient (log₁₀ scale)"
+                    lines={[
+                        { key: 'rnnLogGradient', color: '#8b5cf6', name: 'RNN log₁₀(gradient)', width: 2 },
+                        { key: 'lstmLogGradient', color: '#f59e0b', name: 'LSTM log₁₀(gradient)', width: 2 }
+                    ]}
+                />
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-red-50 rounded border border-red-200">
+                    <p className="text-sm text-gray-700">
+                      <strong className="text-red-700">RNN Problem:</strong><br/>
+                      Gradient at timestep 1: <span className="font-bold text-red-600">
+                        {finalRNNGradient.toExponential(2)}
+                      </span><br/>
+                      <span className="text-xs">Too small to effectively update weights!</span>
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded border border-green-200">
+                    <p className="text-sm text-gray-700">
+                      <strong className="text-green-700">LSTM Solution:</strong><br/>
+                      Gradient at timestep 1: <span className="font-bold text-green-600">
+                        {finalLSTMGradient.toExponential(2)}
+                      </span><br/>
+                      <span className="text-xs">Stable enough for learning!</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow mb-6">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                  Why Does Vanishing Gradient Happen?
+                </h3>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="p-3 bg-gray-50 rounded">
+                    <p className="font-mono text-xs mb-2">
+                      ∂L/∂h₁ = ∂L/∂h_T × ∂h_T/∂h_(T-1) × ... × ∂h₂/∂h₁
+                    </p>
+                    <p>
+                      Each derivative <code className="bg-gray-200 px-1 rounded">∂h_t/∂h_(t-1)</code> is typically &lt; 1
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-gray-50 rounded">
+                    <p>
+                      After T timesteps: gradient ≈ <code className="bg-gray-200 px-1 rounded">(0.85)^T</code> for RNN
+                    </p>
+                    <p className="mt-1">
+                      When T=30: <code className="bg-gray-200 px-1 rounded">(0.85)³⁰ ≈ 0.008</code> (nearly zero!)
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-green-50 rounded border border-green-200">
+                    <p className="font-semibold text-green-800 mb-1">💡 LSTM Solution</p>
+                    <p>
+                      LSTM uses gates and a cell state that allows gradients to "skip" intermediate timesteps,
+                      avoiding exponential decay through multiplication. The cell state acts as a "highway" for information.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                  Key Takeaways for Hydrology
+                </h3>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">❌</span>
+                    <p><strong>RNN:</strong> Cannot effectively learn dependencies longer than ~10-15 timesteps due to vanishing gradients</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <p><strong>LSTM:</strong> Maintains memory over 50+ timesteps, crucial for modeling delayed rainfall-runoff responses</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">💧</span>
+                    <p><strong>Impact:</strong> In catchment modeling, LSTM can capture how rainfall from weeks ago affects current streamflow</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<RNNvsLSTMDemo />, document.getElementById('root'));
+    </script>
+</body>
+</html>

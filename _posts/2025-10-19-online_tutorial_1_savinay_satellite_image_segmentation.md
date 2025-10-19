@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Satellite Image Segmentation
-description: This tutorial provides a ...
+title: Savinay Nagendra is a Research Scientist at Meta AI Research in Menlo Park, California. He earned his Ph.D. in Computer Science and Engineering from Pennsylvania State University, where he was advised by Professor Daniel Kifer. His research focuses on computer vision, deep learning, and reinforcement learning, with a particular emphasis on developing efficient semantic segmentation algorithms and enabling the adaptation of large-scale foundation vision models to data- and compute-constrained environments. His work has been recognized at the Google AI Impact Summit and the American Geophysical Union, and he received the AI Societal Impact Award in 2023–2024 for his project on using AI to reduce global methane emissions. Savinay previously interned at Schlumberger Research and Meta AI Research and has served as a reviewer for leading AI conferences and journals. Outside of work, he is an Indian classical vocalist and enjoys playing badminton and table tennis, watching movies, and exploring musical instruments such as the ukulele, guitar, and keyboard.
+description: SmartScan — an interactive AI system that automatically identifies potential sources of methane leaks from satellite imagery. SmartScan leverages the Segment Anything Model (SAM), a large-scale vision transformer from Meta, and introduces a novel prompt engineering technique that enables accurate subspace extraction using few-shot learning and lightweight models. With fewer than 50 training images, SmartScan achieves state-of-the-art performance, eliminating the need for expensive pixel-level annotations.
 date: 2025-10-19
 event_time: "11:00 - 12：00 AM"        
 event_date: "Oct 19, 2025"
@@ -15,3 +15,12 @@ toc: false
 ---
 
 
+Our planet is warming at an alarming rate — 2023 was the hottest year on record, and the past decade has been the warmest since 1850. A major contributor to this warming is methane, a greenhouse gas over 80 times more potent than CO₂. One of the largest sources of methane emissions comes from fugitive leaks in oil and gas infrastructure such as wellheads, compressors, and pipelines. Detecting and mitigating these leaks in real time is critical for climate action.
+
+To address this, we developed SmartScan — an interactive AI system that automatically identifies potential sources of methane leaks from satellite imagery. SmartScan leverages the Segment Anything Model (SAM), a large-scale vision transformer from Meta, and introduces a novel prompt engineering technique that enables accurate subspace extraction using few-shot learning and lightweight models. With fewer than 50 training images, SmartScan achieves state-of-the-art performance, eliminating the need for expensive pixel-level annotations.
+
+SmartScan operates in two modes — Data Curation Mode, where users interactively annotate subspaces using box and point prompts, and Autonomous Mode, where trained prompt generators replace user input for automated detection. A companion quality-check interface ensures reliable subspace outputs for downstream algorithms such as optimal sensor placement and source inversion.
+
+This tutorial provides a detailed walkthrough of how large-scale vision models like SAM can be effectively adapted for domain-specific applications through intelligent prompt engineering and few-shot learning. Participants will learn how to design efficient data curation pipelines, develop lightweight prompt generators, and integrate quality-control mechanisms for high-stakes environmental monitoring.
+
+SmartScan demonstrates how AI can be leveraged to accelerate climate solutions. Currently deployed at Schlumberger Research, it has enabled methane leak mitigation across over 100 U.S. oil pads, reducing emissions by nearly 80% — a powerful example of how AI innovation can translate into real-world environmental impact.

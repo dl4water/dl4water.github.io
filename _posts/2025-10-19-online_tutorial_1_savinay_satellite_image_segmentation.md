@@ -1,6 +1,6 @@
 ---
 layout: post
-title: SmartScan: AI Powered Optimal Sensor Placement to Tackle Global Methane Emissions
+title: SmartScan - AI Powered Optimal Sensor Placement to Tackle Global Methane Emissions
 description: SmartScan — an interactive AI system that automatically identifies potential sources of methane leaks from satellite imagery. SmartScan leverages the Segment Anything Model (SAM), a large-scale vision transformer from Meta, and introduces a novel prompt engineering technique that enables accurate subspace extraction using few-shot learning and lightweight models. With fewer than 50 training images, SmartScan achieves state-of-the-art performance, eliminating the need for expensive pixel-level annotations.
 date: 2025-10-19
 event_time: "11:00 - 12：00 AM"        

@@ -1,12 +1,12 @@
 ---
 layout: post
-title: Explainable Machine Learning
+title: Sensitivity Analysis and Explainable AI
 description: This tutorial provides a ...
 date: 2025-11-01
 event_time: "11:00 - 12：00 AM"        
 event_date: "Nov 01, 2025"
 category: agenda
-author: updating
+author: banamali
 image:
 video_embed:
 tags: [Online Agenda]

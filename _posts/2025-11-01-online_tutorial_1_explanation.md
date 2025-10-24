@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Talk to Your ML Models. Insights from Sensitivity Analysis (XVARS) and Explainable AI (XAI)
-description: This tutorial provides a ...
+description: Sensitivity Analysis (XVARS) and Explainable AI (XAI)
 date: 2025-11-01
 event_time: "11:00 - 12：00 AM"        
 event_date: "Nov 01, 2025"
@@ -15,7 +15,7 @@ toc: false
 ---
 
 
-Brief presentation summary-The tutorial focuses on a pilot-scale pit lake system in the Athabasca Oil Sands region, Canda where complex physico-chemical interactions and limited process understanding constrain traditional modeling approaches. In such data-scarce and poorly characterized environments, ML offers a practical alternative, capturing hidden patterns and dependencies to support predictive insight and management decisions. Discussion will be focused on;
+The tutorial focuses on a pilot-scale pit lake system in the Athabasca Oil Sands region, Canda where complex physico-chemical interactions and limited process understanding constrain traditional modeling approaches. In such data-scarce and poorly characterized environments, ML offers a practical alternative, capturing hidden patterns and dependencies to support predictive insight and management decisions. Discussion will be focused on;
 
 - Why existing XAI (e.g., SHAP) can be misleading in correlated multivariate data ?
 - How X-VARS bridges local and global interpretations and remains data-size independent ?
